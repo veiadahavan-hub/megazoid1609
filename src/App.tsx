@@ -7,8 +7,11 @@ import AudioHumanizer from './components/AudioHumanizer'
 import TextEditor from './components/TextEditor'
 import ProjectList from './components/ProjectList'
 import BackendStatus from './components/BackendStatus'
+import TimelineEditor from './components/TimelineEditor'
+import BYOKConfig from './components/BYOKConfig'
+import Analytics from './components/Analytics'
 
-export type ViewType = 'dashboard' | 'pipeline' | 'transitions' | 'audio' | 'editor' | 'projects' | 'backend'
+export type ViewType = 'dashboard' | 'pipeline' | 'transitions' | 'audio' | 'editor' | 'projects' | 'backend' | 'timeline' | 'byok' | 'analytics'
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard')
@@ -23,6 +26,9 @@ function App() {
       case 'editor': return <TextEditor />
       case 'projects': return <ProjectList />
       case 'backend': return <BackendStatus />
+      case 'timeline': return <TimelineEditor />
+      case 'byok': return <BYOKConfig />
+      case 'analytics': return <Analytics useMockData={true} />
       default: return <Dashboard onNavigate={setCurrentView} />
     }
   }

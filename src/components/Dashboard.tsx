@@ -1,5 +1,4 @@
 import { ViewType } from '../App'
-import Analytics from './Analytics'
 
 interface DashboardProps {
   onNavigate: (view: ViewType) => void
@@ -87,9 +86,6 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           ))}
         </div>
       </div>
-
-      {/* Analytics Section */}
-      <Analytics useMockData={true} />
 
       {/* Recent Jobs + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
