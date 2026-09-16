@@ -10,8 +10,12 @@ import BackendStatus from './components/BackendStatus'
 import TimelineEditor from './components/TimelineEditor'
 import BYOKConfig from './components/BYOKConfig'
 import Analytics from './components/Analytics'
+import TemplateSelector from './components/TemplateSelector'
+import AssetManager from './components/AssetManager'
+import Settings from './components/Settings'
+import Notifications from './components/Notifications'
 
-export type ViewType = 'dashboard' | 'pipeline' | 'transitions' | 'audio' | 'editor' | 'projects' | 'backend' | 'timeline' | 'byok' | 'analytics'
+export type ViewType = 'dashboard' | 'pipeline' | 'transitions' | 'audio' | 'editor' | 'projects' | 'backend' | 'timeline' | 'byok' | 'analytics' | 'templates' | 'assets' | 'settings' | 'notifications'
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard')
@@ -29,6 +33,10 @@ function App() {
       case 'timeline': return <TimelineEditor />
       case 'byok': return <BYOKConfig />
       case 'analytics': return <Analytics useMockData={true} />
+      case 'templates': return <TemplateSelector onSelect={(id) => console.log('Template selecionado:', id)} />
+      case 'assets': return <AssetManager projectId="demo-project" />
+      case 'settings': return <Settings />
+      case 'notifications': return <Notifications />
       default: return <Dashboard onNavigate={setCurrentView} />
     }
   }

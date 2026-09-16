@@ -335,6 +335,157 @@ app.post('/api/cleanup/run', (req, res) => {
   }
 });
 
+// ─── Templates Routes ──────────────────────────────────────────────────────
+
+// Lista todos os templates
+app.get('/api/templates', (req, res) => {
+  try {
+    const { listTemplates } = require('./utils/projectTemplates');
+    const templates = listTemplates();
+    res.json({ templates });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Detalhes de um template específico
+app.get('/api/templates/:id', (req, res) => {
+  try {
+    const { getTemplate } = require('./utils/projectTemplates');
+    const template = getTemplate(req.params.id);
+    
+    if (!template) {
+      return res.status(404).json({ error: 'Template não encontrado' });
+    }
+    
+    res.json(template);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ─── BYOK Routes ───────────────────────────────────────────────────────────
+
+// Salvar API keys do usuário
+app.post('/api/byok/keys', async (req, res) => {
+  try {
+    const { requireAuth } = require('./middleware/auth');
+    await requireAuth(req, res, async () => {
+      const { saveUserApiKeys } = require('./utils/byokManager');
+      const { keys } = req.body;
+      
+      if (!keys || typeof keys !== 'object') {
+        return res.status(400).json({ error: 'Keys inválidas' });
+      }
+      
+      const result = await saveUserApiKeys(req.user.id, keys);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+      
+      res.json({ success: true, keys: result.keys });
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Buscar API keys do usuário (mascaradas)
+app.get('/api/byok/keys', async (req, res) => {
+  try {
+    const { requireAuth } = require('./middleware/auth');
+    await requireAuth(req, res, async () => {
+      const { getUserApiKeys } = require('./utils/byokManager');
+      const result = await getUserApiKeys(req.user.id);
+      
+      // Mascarar keys para segurança
+      const maskedKeys = {};
+      for (const [provider, key] of Object.entries(result.keys)) {
+        if (key && key.length > 8) {
+          maskedKeys[provider] = key.substring(0, 4) + '...' + key.substring(key.length - 4);
+        } else {
+          maskedKeys[provider] = '***';
+        }
+      }
+      
+      res.json({
+        keys: maskedKeys,
+        isBYOK: result.isBYOK,
+        missing: result.missing,
+      });
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ─── Analytics Routes ──────────────────────────────────────────────────────
+
+// Stats do usuário
+app.get('/api/analytics/stats', async (req, res) => {
+  try {
+    const { requireAuth } = require('./middleware/auth');
+    await requireAuth(req, res, async () => {
+      const {  data, error } = await supabase
+        .from('user_stats')
+        .select('*')
+        .eq('user_id', req.user.id)
+        .single();
+      
+      if (error) throw error;
+      
+      res.json(data);
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Stats diários (últimos 30 dias)
+app.get('/api/analytics/daily', async (req, res) => {
+  try {
+    const { requireAuth } = require('./middleware/auth');
+    await requireAuth(req, res, async () => {
+      const {  data, error } = await supabase
+        .from('daily_render_stats')
+        .select('*')
+        .order('render_date', { ascending: false })
+        .limit(30);
+      
+      if (error) throw error;
+      
+      res.json({ stats: data });
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ─── Notifications Routes ──────────────────────────────────────────────────
+
+// Testar notificação
+app.post('/api/notifications/test', async (req, res) => {
+  try {
+    const { requireAuth } = require('./middleware/auth');
+    await requireAuth(req, res, async () => {
+      const { notifyRenderComplete } = require('./utils/notificationService');
+      
+      const result = await notifyRenderComplete(req.user.id, {
+        id: 'test-project',
+        name: 'Teste de Notificação',
+        output_duration: 600,
+        render_time_ms: 45000,
+        output_url: 'https://example.com/test.mp4',
+      });
+      
+      res.json(result);
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ─── Start Server ────────────────────────────────────────────────────────
 server.listen(PORT, () => {
   console.log(`
