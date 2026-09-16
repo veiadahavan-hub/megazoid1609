@@ -14,6 +14,7 @@ const navItems: { id: ViewType; label: string; icon: string }[] = [
   { id: 'audio', label: 'Humanizer', icon: 'waveform' },
   { id: 'editor', label: 'Editor Texto', icon: 'edit' },
   { id: 'projects', label: 'Projetos', icon: 'folder' },
+  { id: 'backend', label: 'Backend', icon: 'server' },
 ]
 
 function getIcon(icon: string) {
@@ -46,6 +47,11 @@ function getIcon(icon: string) {
     case 'folder': return (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+      </svg>
+    )
+    case 'server': return (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
       </svg>
     )
     default: return null

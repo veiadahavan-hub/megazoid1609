@@ -6,8 +6,9 @@ import TransitionsEngine from './components/TransitionsEngine'
 import AudioHumanizer from './components/AudioHumanizer'
 import TextEditor from './components/TextEditor'
 import ProjectList from './components/ProjectList'
+import BackendStatus from './components/BackendStatus'
 
-export type ViewType = 'dashboard' | 'pipeline' | 'transitions' | 'audio' | 'editor' | 'projects'
+export type ViewType = 'dashboard' | 'pipeline' | 'transitions' | 'audio' | 'editor' | 'projects' | 'backend'
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard')
@@ -21,6 +22,7 @@ function App() {
       case 'audio': return <AudioHumanizer />
       case 'editor': return <TextEditor />
       case 'projects': return <ProjectList />
+      case 'backend': return <BackendStatus />
       default: return <Dashboard onNavigate={setCurrentView} />
     }
   }
