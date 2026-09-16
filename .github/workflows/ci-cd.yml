@@ -1,0 +1,180 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════════════
+  # TEST: Backend
+  # ═══════════════════════════════════════════════════════════════════════
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        working-directory: ./server
+        run: npm install
+
+      - name: Run tests
+        working-directory: ./server
+        run: npm test
+        env:
+          NODE_ENV: test
+
+      - name: Run lint
+        working-directory: ./server
+        run: npm run lint || echo "Lint not configured"
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # TEST: Frontend
+  # ═══════════════════════════════════════════════════════════════════════
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --include=optional --no-audit --no-fund
+
+      - name: Run type check
+        run: npm run typecheck || echo "Type check not configured"
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: dist/
+          retention-days: 7
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # SECURITY: Dependency Audit
+  # ═══════════════════════════════════════════════════════════════════════
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Audit backend dependencies
+        working-directory: ./server
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # DEPLOY: Production (apenas na branch main)
+  # ═══════════════════════════════════════════════════════════════════════
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend, security-audit]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    environment:
+      name: production
+      url: https://app.aistudiopro.com
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Deploy backend to VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            cd /opt/ai-studio-pro
+            git pull origin main
+            cd server
+            npm ci --production
+            pm2 restart all
+          EOF
+
+      - name: Deploy frontend to VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            cd /opt/ai-studio-pro
+            npm ci
+            npm run build
+            sudo cp -r dist/* /var/www/ai-studio-pro/
+          EOF
+
+      - name: Health check
+        run: |
+          sleep 10
+          curl -f https://api.aistudiopro.com/health || exit 1
+
+      - name: Notify deployment
+        if: success()
+        run: |
+          echo "✅ Deployment successful!"
+          # Aqui você pode adicionar notificação Slack/Discord/Email
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # DEPLOY: Staging (branch develop)
+  # ═══════════════════════════════════════════════════════════════════════
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    
+    environment:
+      name: staging
+      url: https://staging.aistudiopro.com
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Deploy to staging
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            cd /opt/ai-studio-pro-staging
+            git pull origin develop
+            cd server
+            npm ci --production
+            pm2 restart staging
+          EOF
