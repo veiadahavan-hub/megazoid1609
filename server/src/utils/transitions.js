@@ -166,7 +166,7 @@ function parallax_pan(config = {}) {
   return {
     command,
     filter: zoompanFilter,
-    metadata: {
+    meta: {
       type: 'parallax_pan',
       totalFrames,
       anchors: anchorKeys,
@@ -252,7 +252,7 @@ function mask_zoom_reveal(config = {}) {
   return {
     command,
     filter: filterComplex,
-    metadata: {
+    meta: {
       type: 'mask_zoom_reveal',
       totalFrames,
       zoomTarget,
@@ -341,7 +341,7 @@ function ink_bleed(config = {}) {
     command,
     filter: filterComplex,
     maskFilter: maskOnlyFilter,
-    metadata: {
+    meta: {
       type: 'ink_bleed',
       frames,
       spreadSpeed,
@@ -433,10 +433,11 @@ function glitch(config = {}) {
   return {
     command,
     filter: filterComplex,
-    metadata: {
+    meta: {
       type: 'glitch',
       rgbShift,
       frames,
+      fps,
       scanlines,
       noiseIntensity,
       duration: frames / fps,
@@ -495,7 +496,7 @@ function dissolve(config = {}) {
   return {
     command,
     filter: filterComplex,
-    metadata: {
+    meta: {
       type: 'dissolve',
       duration,
     },

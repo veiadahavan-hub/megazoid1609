@@ -112,7 +112,7 @@ function audioCamouflage(config = {}) {
   return {
     command,
     filter: filterComplex,
-    metadata: {
+    meta: {
       type: 'audio_camouflage',
       camouflageDb,
       sampleRate,
@@ -246,7 +246,7 @@ function smartSilenceCut(config = {}) {
   return {
     command,
     filter: allFilters,
-    metadata: {
+    meta: {
       type: 'smart_silence_cut',
       totalSegments: validTimestamps.length,
       paddingMs,
