@@ -11,6 +11,8 @@
  * @module tests
  */
 
+// Os mocks são carregados automaticamente via setup.js
+
 const transitions = require('../src/utils/transitions');
 const { validateLottie, generateLottieHash } = require('../src/utils/lottieRasterizer');
 const { audioCamouflage, smartSilenceCut } = require('../src/utils/audioHumanizer');
